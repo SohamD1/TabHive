@@ -13,29 +13,49 @@ import {
   Tooltip,
   useColorModeValue,
   HStack,
-  Image
+  Image,
+  Flex
 } from "@chakra-ui/react"
+import { keyframes } from "@emotion/react"
 import type { IconProps } from "@chakra-ui/react"
 import { ChakraProvider, extendTheme } from "@chakra-ui/react"
 
-// Custom theme with grayscale colors
+// Pulse animation for the button
+const pulseAnimation = keyframes`
+  0% { box-shadow: 0 0 0 0 rgba(33, 33, 33, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(33, 33, 33, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(33, 33, 33, 0); }
+`;
+
+// Button underglow animation
+const glowAnimation = keyframes`
+  0% { box-shadow: 0 4px 10px -2px rgba(33, 33, 33, 0.4); }
+  50% { box-shadow: 0 6px 15px -2px rgba(33, 33, 33, 0.6); }
+  100% { box-shadow: 0 4px 10px -2px rgba(33, 33, 33, 0.4); }
+`;
+
+// Custom theme with refined grayscale colors
 const theme = extendTheme({
   colors: {
     brand: {
-      50: "#f5f5f5",
-      100: "#e0e0e0",
-      200: "#bdbdbd",
-      300: "#9e9e9e",
-      400: "#757575",
-      500: "#616161", // Primary color - dark gray
-      600: "#424242",
-      700: "#303030",
-      800: "#212121",
-      900: "#121212",
+      50: "#f8f9fa",
+      100: "#e9ecef",
+      200: "#dee2e6",
+      300: "#ced4da",
+      400: "#adb5bd",
+      500: "#495057", // Primary color - refined dark gray
+      600: "#343a40",
+      700: "#212529",
+      800: "#1a1a1a",
+      900: "#0a0a0a",
     },
     accent: {
-      500: "#9e9e9e", // Accent color - medium gray
+      500: "#6c757d", // Accent color - medium gray
     }
+  },
+  fonts: {
+    heading: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
+    body: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
   },
   styles: {
     global: {
@@ -44,6 +64,7 @@ const theme = extendTheme({
         margin: 0,
         padding: 0,
         overflow: "hidden",
+        fontFeatureSettings: "'ss01', 'ss02', 'cv01', 'cv03'",
       }
     }
   },
@@ -52,11 +73,27 @@ const theme = extendTheme({
       defaultProps: {
         colorScheme: "brand",
       },
+      baseStyle: {
+        fontWeight: "600",
+        borderRadius: "md",
+        letterSpacing: "0.01em",
+      }
+    },
+    Heading: {
+      baseStyle: {
+        fontWeight: "600",
+        letterSpacing: "-0.01em",
+      }
+    },
+    Text: {
+      baseStyle: {
+        lineHeight: "tall",
+      }
     }
   },
 });
 
-// Simulated tab icon for visual appeal
+// Tab icon component with refined design
 const TabIcon = (props: IconProps) => (
   <Icon viewBox="0 0 24 24" {...props}>
     <path
@@ -66,21 +103,26 @@ const TabIcon = (props: IconProps) => (
   </Icon>
 );
 
-// Centered logo component
+// Logo component with improved alignment
 const Logo = () => (
-  <Center mb={1}>
+  <Flex align="center" justify="center">
     <TabIcon boxSize={6} color="white" mr={2} />
-    <Heading size="md">
+    <Heading size="md" letterSpacing="-0.02em">
       FlowForge
     </Heading>
-  </Center>
+  </Flex>
 );
 
 function Popup() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isHovering, setIsHovering] = useState(false);
   const toast = useToast();
-  const bgColor = useColorModeValue("white", "gray.700");
+  const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
+  
+  // Animation styles
+  const glowStyle = `${glowAnimation} 2s infinite`;
+  const pulseStyle = `${pulseAnimation} 2s infinite`;
 
   useEffect(() => {
     // Log the viewport dimensions for debugging
@@ -158,71 +200,112 @@ function Popup() {
         w="100%" 
         h="100%" 
         background="white"
-        backgroundImage="linear-gradient(to bottom, rgba(33, 33, 33, 0.03), rgba(33, 33, 33, 0.01))"
+        backgroundImage="linear-gradient(to bottom, rgba(248, 249, 250, 0.5), rgba(233, 236, 239, 0.3))"
         overflow="hidden"
+        borderRadius="8px"
+        boxShadow="lg"
       >
         <Box 
           as="header" 
-          p={3} 
+          p={4} 
           borderBottom="1px" 
           borderColor={borderColor}
-          bgColor="brand.800"
+          bgColor="brand.700"
           color="white"
+          backgroundImage="linear-gradient(to right, #1a1a1a, #292929)"
         >
           <Logo />
-          <Center>
-            <Text fontSize="xs" opacity={0.9}>
+          <Center mt={1}>
+            <Text fontSize="xs" fontWeight="medium" opacity={0.9} letterSpacing="0.02em">
               Smart tab organization
             </Text>
           </Center>
         </Box>
         
         <Box 
-          py={3} 
-          px={3}
+          py={5} 
+          px={4}
           overflow="hidden"
           h="calc(100% - 70px)"
         >
-          <VStack spacing={3} align="stretch">
+          <VStack spacing={6} align="stretch">
             <Box
               bg={bgColor} 
-              p={3} 
-              borderRadius="md" 
+              p={4} 
+              borderRadius="lg" 
               borderWidth="1px" 
               borderColor={borderColor}
               boxShadow="sm"
+              transition="all 0.2s"
+              _hover={{
+                boxShadow: "md",
+                borderColor: "gray.300"
+              }}
             >
-              <VStack align="start" spacing={1}>
-                <Heading size="xs" mb={1} color="brand.700">
+              <VStack align="start" spacing={3}>
+                <Heading size="sm" color="brand.700">
                   Tab Organization Features
                 </Heading>
-                <Text fontSize="xs">The extension will:</Text>
-                <HStack align="start" pl={2} spacing={2}>
-                  <Icon as={TabIcon} boxSize="12px" color="accent.500" mt={1} />
-                  <Text fontSize="xs">Detect course codes (like CS136, MATH118)</Text>
-                </HStack>
-                <HStack align="start" pl={2} spacing={2}>
-                  <Icon as={TabIcon} boxSize="12px" color="accent.500" mt={1} />
-                  <Text fontSize="xs">Group similar tabs by content</Text>
-                </HStack>
-                <HStack align="start" pl={2} spacing={2}>
-                  <Icon as={TabIcon} boxSize="12px" color="accent.500" mt={1} />
-                  <Text fontSize="xs">Collapse groups for a cleaner interface</Text>
-                </HStack>
+                <VStack align="start" spacing={2} pl={1}>
+                  <HStack align="center" spacing={3}>
+                    <Center w="24px" h="24px" bg="brand.100" borderRadius="full">
+                      <Icon as={TabIcon} boxSize="14px" color="brand.700" />
+                    </Center>
+                    <Text fontSize="sm" fontWeight="medium">Detect course codes (CS136, MATH118)</Text>
+                  </HStack>
+                  <HStack align="center" spacing={3}>
+                    <Center w="24px" h="24px" bg="brand.100" borderRadius="full">
+                      <Icon as={TabIcon} boxSize="14px" color="brand.700" />
+                    </Center>
+                    <Text fontSize="sm" fontWeight="medium">Group similar tabs by content</Text>
+                  </HStack>
+                  <HStack align="center" spacing={3}>
+                    <Center w="24px" h="24px" bg="brand.100" borderRadius="full">
+                      <Icon as={TabIcon} boxSize="14px" color="brand.700" />
+                    </Center>
+                    <Text fontSize="sm" fontWeight="medium">Collapse groups for a cleaner interface</Text>
+                  </HStack>
+                </VStack>
               </VStack>
             </Box>
             
             <Button
-              size="md"
+              size="lg"
+              height="50px"
               colorScheme="brand"
               onClick={organizeTabs}
               isLoading={isLoading}
               loadingText="Organizing..."
+              fontWeight="600"
               leftIcon={isLoading ? <Spinner size="sm" /> : <TabIcon />}
-              boxShadow="md"
-              _hover={{ transform: "translateY(-2px)", boxShadow: "lg" }}
-              _active={{ transform: "translateY(0)", boxShadow: "md" }}
-              transition="all 0.2s"
+              animation={isHovering ? undefined : glowStyle}
+              boxShadow={isHovering ? "0 6px 20px -2px rgba(33, 33, 33, 0.6)" : "0 4px 10px -2px rgba(33, 33, 33, 0.4)"}
+              transition="all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
+              transform={isHovering ? "translateY(-2px)" : "none"}
+              _hover={{}}
+              _active={{
+                transform: "translateY(0)",
+                boxShadow: "0 2px 6px -2px rgba(33, 33, 33, 0.5)",
+              }}
+              onMouseEnter={() => setIsHovering(true)}
+              onMouseLeave={() => setIsHovering(false)}
+              position="relative"
+              zIndex={1}
+              bgGradient="linear(to-r, brand.600, brand.700)"
+              _after={{
+                content: '""',
+                position: "absolute",
+                top: "auto",
+                left: "5%",
+                bottom: "-4px",
+                width: "90%",
+                height: "10px",
+                background: "rgba(33, 37, 41, 0.15)",
+                filter: "blur(10px)",
+                borderRadius: "50%",
+                zIndex: -1,
+                transition: "all 0.3s ease"
+              }}
             >
               Organize My Tabs
             </Button>
