@@ -5,6 +5,33 @@ import type { PageMetadata } from "./content"
 import type { Tab, Workspace } from "./store/workspaceStore"
 import { organizeTabsByClustering } from "./utils/clustering"
 
+// Define message types for better type safety
+interface ApiKeyMessage {
+  action: 'setApiKey' | 'getApiKey';
+  key?: string;
+}
+
+interface OrganizeTabsMessage {
+  action: 'organizeTabs';
+}
+
+interface OrganizationStartedMessage {
+  type: 'ORGANIZATION_STARTED';
+}
+
+interface OrganizationCompletedMessage {
+  type: 'ORGANIZATION_COMPLETED';
+  numGroups: number;
+}
+
+interface OrganizationErrorMessage {
+  type: 'ORGANIZATION_ERROR';
+  error: string;
+}
+
+type Message = ApiKeyMessage | OrganizeTabsMessage;
+type ResponseMessage = OrganizationStartedMessage | OrganizationCompletedMessage | OrganizationErrorMessage;
+
 // OpenAI API key will be provided by the user
 let OPENAI_API_KEY = "";
 
@@ -17,11 +44,11 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Listen for messages from popup
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message: Message, sender, sendResponse) => {
   console.log("Background received message:", message);
   
   if (message.action === 'setApiKey') {
-    OPENAI_API_KEY = message.key;
+    OPENAI_API_KEY = message.key || "";
     // Store the API key in local storage
     chrome.storage.local.set({ 'openaiApiKey': message.key }, () => {
       // Check for errors
@@ -55,7 +82,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 async function organizeTabs() {
   try {
     // Notify popup that we're starting to organize
-    chrome.runtime.sendMessage({ type: 'ORGANIZATION_STARTED' });
+    chrome.runtime.sendMessage({ type: 'ORGANIZATION_STARTED' } as OrganizationStartedMessage);
     
     // Get all tabs in the current window
     const allTabs = await chrome.tabs.query({ currentWindow: true });
@@ -67,7 +94,7 @@ async function organizeTabs() {
     const groupedTabsInfo = await Promise.all(
       tabGroups.map(async (group) => {
         const tabs = await chrome.tabs.query({ groupId: group.id });
-        return tabs.map(tab => tab.id);
+        return tabs.map(tab => tab.id).filter((id): id is number => id !== undefined);
       })
     );
     
@@ -77,7 +104,7 @@ async function organizeTabs() {
     // Filter out tabs that are already in groups AND "New Tab" pages
     const ungroupedTabs = allTabs.filter(tab => {
       // Skip tabs that are already in groups
-      if (groupedTabIds.includes(tab.id!)) return false;
+      if (tab.id !== undefined && groupedTabIds.includes(tab.id)) return false;
       
       // Skip "New Tab" pages (aggressively match all variations)
       const isNewTab = 
@@ -98,7 +125,7 @@ async function organizeTabs() {
       chrome.runtime.sendMessage({
         type: 'ORGANIZATION_ERROR',
         error: 'You need at least 2 ungrouped tabs (excluding New Tab pages) to create groups'
-      });
+      } as OrganizationErrorMessage);
       return;
     }
     
@@ -109,7 +136,7 @@ async function organizeTabs() {
       chrome.runtime.sendMessage({
         type: 'ORGANIZATION_ERROR',
         error: 'No groups were identified in your tabs'
-      });
+      } as OrganizationErrorMessage);
       return;
     }
     
@@ -146,13 +173,13 @@ async function organizeTabs() {
     chrome.runtime.sendMessage({ 
       type: 'ORGANIZATION_COMPLETED',
       numGroups: groupedTabs.size
-    });
-  } catch (error) {
+    } as OrganizationCompletedMessage);
+  } catch (error: unknown) {
     console.error('Error organizing tabs:', error);
     chrome.runtime.sendMessage({
       type: 'ORGANIZATION_ERROR',
       error: error instanceof Error ? error.message : 'Unknown error occurred'
-    });
+    } as OrganizationErrorMessage);
   }
 }
 
@@ -182,9 +209,9 @@ const loadWorkspaces = async () => {
   try {
     const data = await chrome.storage.local.get('flowforge-workspaces');
     if (data['flowforge-workspaces']) {
-      workspaces = JSON.parse(data['flowforge-workspaces']);
+      workspaces = JSON.parse(data['flowforge-workspaces'] as string);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error loading workspaces:', error);
   }
 };
@@ -195,7 +222,7 @@ const saveWorkspaces = async () => {
     await chrome.storage.local.set({
       'flowforge-workspaces': JSON.stringify(workspaces)
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error saving workspaces:', error);
   }
 };

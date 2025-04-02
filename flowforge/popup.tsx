@@ -20,6 +20,26 @@ import { keyframes } from "@emotion/react"
 import type { IconProps } from "@chakra-ui/react"
 import { ChakraProvider, extendTheme } from "@chakra-ui/react"
 
+// Define message types for better type safety
+interface OrganizationCompletedMessage {
+  type: "ORGANIZATION_COMPLETED";
+  numGroups: number;
+}
+
+interface OrganizationErrorMessage {
+  type: "ORGANIZATION_ERROR";
+  error: string;
+}
+
+interface OrganizationStartedMessage {
+  type: "ORGANIZATION_STARTED";
+}
+
+type OrganizationMessage = 
+  | OrganizationCompletedMessage 
+  | OrganizationErrorMessage
+  | OrganizationStartedMessage;
+
 // Pulse animation for the button
 const pulseAnimation = keyframes`
   0% { box-shadow: 0 0 0 0 rgba(33, 33, 33, 0.4); }
@@ -147,7 +167,7 @@ function Popup() {
     setIsLoading(true);
     try {
       // Listen for organization events
-      const messageListener = (message: any) => {
+      const messageListener = (message: OrganizationMessage) => {
         if (message.type === "ORGANIZATION_COMPLETED") {
           toast({
             title: "Tabs Organized!",
@@ -158,7 +178,7 @@ function Popup() {
             position: "top",
           });
           setIsLoading(false);
-          chrome.runtime.onMessage.removeListener(messageListener);
+          chrome.runtime.onMessage.removeListener(messageListener as (message: any) => void);
         } else if (message.type === "ORGANIZATION_ERROR") {
           toast({
             title: "Error",
@@ -169,17 +189,17 @@ function Popup() {
             position: "top",
           });
           setIsLoading(false);
-          chrome.runtime.onMessage.removeListener(messageListener);
+          chrome.runtime.onMessage.removeListener(messageListener as (message: any) => void);
         }
       };
       
-      chrome.runtime.onMessage.addListener(messageListener);
+      chrome.runtime.onMessage.addListener(messageListener as (message: any) => void);
       
       // Send message to background script to organize tabs
       await chrome.runtime.sendMessage({ 
         action: "organizeTabs"
       });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error organizing tabs:", error);
       toast({
         title: "Error",

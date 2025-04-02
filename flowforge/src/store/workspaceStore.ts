@@ -13,6 +13,8 @@ export interface Workspace {
   tabs: Tab[]
   createdAt: Date
   updatedAt: Date
+  deadline?: Date
+  tags: string[]
 }
 
 interface WorkspaceState {
@@ -40,6 +42,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
               id: crypto.randomUUID(),
               createdAt: new Date(),
               updatedAt: new Date(),
+              tags: workspace.tags || [],
             },
           ],
         })),
