@@ -115,7 +115,7 @@ export const useWorkspaceStore = create<WorkspaceState>()(
         })),
     }),
     {
-      name: 'flowforge-workspaces',
+      name: 'tabhive-workspaces',
     }
   )
 ) 

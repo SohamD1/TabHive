@@ -1,6 +1,6 @@
-# FlowForge - Chrome Extension for Unified Academic/Developer Productivity
+# TabHive - Chrome Extension for Unified Academic/Developer Productivity
 
-FlowForge is a Chrome extension that automatically organizes fragmented workflows (code, research, deadlines) into context-aware workspaces. It helps students and developers save time by managing related tabs, detecting deadlines, and providing easy access to grouped resources.
+TabHive is a Chrome extension that automatically organizes fragmented workflows (code, research, deadlines) into context-aware workspaces. It helps students and developers save time by managing related tabs, detecting deadlines, and providing easy access to grouped resources.
 
 ## Features
 
@@ -48,7 +48,7 @@ pnpm package
 ## Project Structure
 
 ```
-flowforge/
+tabhive/
 ├── src/
 │   ├── components/       # UI components
 │   ├── hooks/            # Custom React hooks

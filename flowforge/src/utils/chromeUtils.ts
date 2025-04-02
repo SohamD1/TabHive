@@ -42,7 +42,7 @@ export const createTabGroup = async (tabs: Tab[]): Promise<void> => {
       tabIds: tabs.map((tab) => parseInt(tab.id)),
     })
     await chrome.tabGroups.update(group, {
-      title: 'FlowForge Workspace',
+      title: 'TabHive Workspace',
     })
   } catch (error) {
     console.error('Error creating tab group:', error)

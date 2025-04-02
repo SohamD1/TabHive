@@ -1,0 +1,72 @@
+<svg width="800" height="600" viewBox="0 0 800 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Browser Window -->
+  <rect width="800" height="600" rx="8" fill="#121212" stroke="#333333" stroke-width="2"/>
+  
+  <!-- Browser Top Bar -->
+  <rect x="0" y="0" width="800" height="80" rx="8" fill="#1A1A1A"/>
+  
+  <!-- Browser Controls -->
+  <circle cx="20" cy="20" r="6" fill="#FF5F56"/>
+  <circle cx="40" cy="20" r="6" fill="#FFBD2E"/>
+  <circle cx="60" cy="20" r="6" fill="#27C93F"/>
+  
+  <!-- Address Bar -->
+  <rect x="100" y="12" width="600" height="24" rx="4" fill="#333333"/>
+  
+  <!-- Tab Bar -->
+  <rect x="0" y="42" width="800" height="38" fill="#1A1A1A"/>
+  
+  <!-- Tab Groups -->
+  <!-- MATH 118 Group -->
+  <rect x="10" y="46" width="160" height="30" rx="6" fill="#00FF9D"/>
+  <text x="45" y="66" font-family="Arial" font-size="12" fill="#121212" font-weight="bold">MATH 118</text>
+  <circle cx="25" cy="61" r="8" fill="#121212"/>
+  <text x="22" y="65" font-family="Arial" font-size="10" fill="#00FF9D" font-weight="bold">3</text>
+  
+  <!-- CS 101 Group -->
+  <rect x="180" y="46" width="160" height="30" rx="6" fill="#FF9D00"/>
+  <text x="230" y="66" font-family="Arial" font-size="12" fill="#121212" font-weight="bold">CS 101</text>
+  <circle cx="195" cy="61" r="8" fill="#121212"/>
+  <text x="192" y="65" font-family="Arial" font-size="10" fill="#FF9D00" font-weight="bold">4</text>
+  
+  <!-- PHYS 115 Group -->
+  <rect x="350" y="46" width="160" height="30" rx="6" fill="#FF00E5"/>
+  <text x="400" y="66" font-family="Arial" font-size="12" fill="#121212" font-weight="bold">PHYS 115</text>
+  <circle cx="365" cy="61" r="8" fill="#121212"/>
+  <text x="362" y="65" font-family="Arial" font-size="10" fill="#FF00E5" font-weight="bold">2</text>
+  
+  <!-- Research Group -->
+  <rect x="520" y="46" width="160" height="30" rx="6" fill="#009DFF"/>
+  <text x="560" y="66" font-family="Arial" font-size="12" fill="#121212" font-weight="bold">Research</text>
+  <circle cx="535" cy="61" r="8" fill="#121212"/>
+  <text x="532" y="65" font-family="Arial" font-size="10" fill="#009DFF" font-weight="bold">5</text>
+  
+  <!-- Content Area -->
+  <rect x="0" y="80" width="800" height="520" fill="#1A1A1A"/>
+  
+  <!-- MATH 118 Tab Content -->
+  <rect x="40" y="100" width="720" height="80" rx="4" fill="#242424"/>
+  <text x="60" y="130" font-family="Arial" font-size="16" fill="#FFFFFF" font-weight="bold">Calculus II - Integration Methods</text>
+  <text x="60" y="155" font-family="Arial" font-size="14" fill="#AAAAAA">MATH 118 - Course Materials</text>
+  
+  <rect x="40" y="190" width="350" height="80" rx="4" fill="#242424"/>
+  <text x="60" y="220" font-family="Arial" font-size="16" fill="#FFFFFF" font-weight="bold">MATH 118 Assignment 3</text>
+  <text x="60" y="245" font-family="Arial" font-size="14" fill="#AAAAAA">Due: Friday, April 15</text>
+  
+  <rect x="410" y="190" width="350" height="80" rx="4" fill="#242424"/>
+  <text x="430" y="220" font-family="Arial" font-size="16" fill="#FFFFFF" font-weight="bold">Calculus Textbook Chapter 7</text>
+  <text x="430" y="245" font-family="Arial" font-size="14" fill="#AAAAAA">Techniques of Integration</text>
+  
+  <!-- TabHive Branding -->
+  <rect x="300" y="300" width="200" height="60" rx="30" fill="#00FF9D"/>
+  <text x="340" y="340" font-family="Arial" font-size="20" fill="#121212" font-weight="bold">TabHive</text>
+  
+  <text x="250" y="390" font-family="Arial" font-size="14" fill="#AAAAAA" text-anchor="middle">
+    Intelligent Tab Organization
+  </text>
+  
+  <!-- Flow Lines -->
+  <path d="M200 450 C 300 400, 400 500, 600 420" stroke="#00FF9D" stroke-width="2" stroke-dasharray="5,5"/>
+  <path d="M100 430 C 200 500, 400 450, 500 520" stroke="#00FF9D" stroke-width="2" stroke-dasharray="5,5"/>
+  <path d="M300 470 C 350 400, 450 450, 700 430" stroke="#00FF9D" stroke-width="2" stroke-dasharray="5,5"/>
+</svg> 

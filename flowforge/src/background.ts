@@ -40,7 +40,7 @@ let workspaces: Workspace[] = [];
 
 // Listen for installation
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('FlowForge Tab Organizer has been installed');
+  console.log('TabHive Tab Organizer has been installed');
 });
 
 // Listen for messages from popup
@@ -207,9 +207,9 @@ chrome.storage.local.get('openaiApiKey', (result) => {
 // Load workspaces from storage
 const loadWorkspaces = async () => {
   try {
-    const data = await chrome.storage.local.get('flowforge-workspaces');
-    if (data['flowforge-workspaces']) {
-      workspaces = JSON.parse(data['flowforge-workspaces'] as string);
+    const data = await chrome.storage.local.get('tabhive-workspaces');
+    if (data['tabhive-workspaces']) {
+      workspaces = JSON.parse(data['tabhive-workspaces'] as string);
     }
   } catch (error: unknown) {
     console.error('Error loading workspaces:', error);
@@ -220,7 +220,7 @@ const loadWorkspaces = async () => {
 const saveWorkspaces = async () => {
   try {
     await chrome.storage.local.set({
-      'flowforge-workspaces': JSON.stringify(workspaces)
+      'tabhive-workspaces': JSON.stringify(workspaces)
     });
   } catch (error: unknown) {
     console.error('Error saving workspaces:', error);

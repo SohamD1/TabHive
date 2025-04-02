@@ -1,0 +1,7 @@
+This is a placeholder. In a real implementation, you would need to:
+
+1. Use a tool like Inkscape, Adobe Illustrator, or an online SVG-to-PNG converter to convert the SVG files to PNG format.
+2. Ensure the PNGs have appropriate sizes (e.g., logo.png should be at least 200x200px).
+3. Place the converted PNGs in this directory.
+
+SVG files have been created for all the necessary graphics in SVG format. These can be used directly in the HTML for better quality, or converted to PNG as needed. 

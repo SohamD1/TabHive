@@ -128,7 +128,7 @@ const Logo = () => (
   <Flex align="center" justify="center">
     <TabIcon boxSize={6} color="white" mr={2} />
     <Heading size="md" letterSpacing="-0.02em">
-      FlowForge
+      TabHive
     </Heading>
   </Flex>
 );
