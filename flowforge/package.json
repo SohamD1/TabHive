@@ -1,34 +1,63 @@
 {
-  "name": "with-popup",
-  "displayName": "With popup",
-  "version": "0.0.1",
-  "description": "A basic Plasmo extension.",
-  "author": "Plasmo Corp. <foss@plasmo.com>",
+  "name": "flowforge",
+  "displayName": "FlowForge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Automatically organize fragmented workflows (code, research, deadlines) into context-aware workspaces",
+  "author": "Your Name",
   "contributors": [
     "louisgv"
   ],
   "scripts": {
-    "dev": "plasmo dev",
-    "build": "plasmo build",
-    "package": "plasmo package"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "build:alt": "esbuild src/background.ts popup.tsx src/content.ts --bundle --outdir=dist --target=es2020 --platform=browser --define:process.env.NODE_ENV=\\\"production\\\" --external:fs --external:path --external:crypto",
+    "build:html": "node scripts/build-html.js",
+    "build:complete": "pnpm build:alt && pnpm build:html"
   },
   "dependencies": {
-    "plasmo": "workspace:*",
-    "react": "18.2.0",
-    "react-dom": "18.2.0"
+    "@chakra-ui/react": "^2.8.2",
+    "@emotion/react": "^11.11.3",
+    "@emotion/styled": "^11.11.0",
+    "date-fns": "^2.30.0",
+    "framer-motion": "^10.17.9",
+    "pdf-lib": "^1.17.1",
+    "plasmo": "^0.84.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "webextension-polyfill": "^0.10.0",
+    "zustand": "^4.4.1",
+    "ml-kmeans": "^6.0.0"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.1.1",
     "@types/chrome": "0.0.258",
-    "@types/node": "20.11.5",
-    "@types/react": "18.2.48",
-    "@types/react-dom": "18.2.18",
+    "@types/node": "^18.18.6",
+    "@types/react": "^18.2.28",
+    "@types/react-dom": "^18.2.13",
+    "@vitejs/plugin-react": "^4.1.0",
+    "@typescript-eslint/eslint-plugin": "^6.9.0",
+    "@typescript-eslint/parser": "^6.9.0",
+    "esbuild": "^0.19.12",
+    "eslint": "^8.52.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.3",
     "prettier": "3.2.4",
-    "typescript": "5.3.3"
+    "typescript": "^5.2.2",
+    "vite": "^4.5.0"
   },
   "manifest": {
     "host_permissions": [
       "https://*/*"
+    ],
+    "permissions": [
+      "tabs",
+      "storage",
+      "bookmarks",
+      "history",
+      "downloads",
+      "alarms"
     ]
   }
 }

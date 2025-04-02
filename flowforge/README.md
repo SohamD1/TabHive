@@ -1,33 +1,70 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+# FlowForge - Chrome Extension for Unified Academic/Developer Productivity
 
-## Getting Started
+FlowForge is a Chrome extension that automatically organizes fragmented workflows (code, research, deadlines) into context-aware workspaces. It helps students and developers save time by managing related tabs, detecting deadlines, and providing easy access to grouped resources.
 
-First, run the development server:
+## Features
+
+- **Auto-Groups Resources by Project**
+  - Detects open tabs related to your active task using URLs and content analysis
+  - One-click workspace restore: Reopen all tabs for a project
+
+- **Deadline Detection**
+  - Parses web content for due dates and deadlines using regex
+  - Organizes deadline information by project
+
+- **Project Organization**
+  - Tag-based organization system
+  - Search and filter workspaces
+
+## Development
+
+This project is built with:
+- TypeScript
+- React
+- Plasmo Extension Framework
+- Chakra UI
+- Zustand for state management
+
+### Getting Started
 
 ```bash
+# Install dependencies
+pnpm install
+
+# Run development server
 pnpm dev
-# or
-npm run dev
 ```
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
-
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
-
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
-
-## Making production build
-
-Run the following:
+### Building for Production
 
 ```bash
+# Create production build
 pnpm build
-# or
-npm run build
+
+# Package the extension
+pnpm package
 ```
 
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
+## Project Structure
 
-## Submit to the webstores
+```
+flowforge/
+├── src/
+│   ├── components/       # UI components
+│   ├── hooks/            # Custom React hooks
+│   ├── store/            # State management
+│   ├── utils/            # Utility functions
+│   ├── background.ts     # Background script
+│   └── content.ts        # Content scripts
+├── assets/               # Static assets
+├── popup.tsx             # Extension popup
+└── README.md             # You are here
+```
 
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+MIT
