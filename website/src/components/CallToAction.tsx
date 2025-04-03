@@ -1,0 +1,120 @@
+import React from 'react';
+import styled, { keyframes } from 'styled-components';
+
+const glowAnimation = keyframes`
+  0% { box-shadow: 0 0 10px 2px rgba(255, 245, 0, 0.4); }
+  50% { box-shadow: 0 0 20px 5px rgba(255, 245, 0, 0.7); }
+  100% { box-shadow: 0 0 10px 2px rgba(255, 245, 0, 0.4); }
+`;
+
+const textGlowAnimation = keyframes`
+  0% { text-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+  50% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 30px rgba(255, 215, 0, 0.4); }
+  100% { text-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
+`;
+
+const CTAContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  margin: 100px 0;
+  width: 100%;
+`;
+
+const Heading = styled.h1`
+  font-size: 5rem;
+  margin-bottom: 40px;
+  color: white;
+  letter-spacing: 2px;
+  
+  @media (max-width: 768px) {
+    font-size: 3.2rem;
+    margin-bottom: 30px;
+    letter-spacing: 1.5px;
+  }
+`;
+
+const GlowingText = styled.span`
+  color: #FFD700;
+  animation: ${textGlowAnimation} 3s infinite;
+  display: inline;
+  font-weight: 700;
+  margin-left: 15px;
+`;
+
+const Subheading = styled.p`
+  font-size: 1.8rem;
+  margin-bottom: 60px;
+  max-width: 800px;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 1px;
+  
+  @media (max-width: 768px) {
+    font-size: 1.4rem;
+    margin-bottom: 40px;
+  }
+`;
+
+const VideoContainer = styled.div`
+  width: 100%;
+  max-width: 800px;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 60px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+`;
+
+const CTAButton = styled.a`
+  background-color: var(--accent-color);
+  color: black;
+  font-size: 1.4rem;
+  padding: 18px 50px;
+  border-radius: 50px;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  animation: ${glowAnimation} 3s infinite;
+  display: inline-block;
+  text-decoration: none;
+  margin-bottom: 40px;
+  letter-spacing: 1.5px;
+  
+  &:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 30px rgba(255, 215, 0, 0.5);
+  }
+`;
+
+const CallToAction: React.FC = () => {
+  const googleDriveLink = "https://drive.google.com/drive/folders/your-folder-id";
+
+  return (
+    <CTAContainer id="home">
+      <Heading>
+        Tab Chaos<GlowingText>Conquered</GlowingText>
+      </Heading>
+      <Subheading>
+        Stop drowning in a sea of browser tabs. TabHive organizes your digital workspace automatically.
+      </Subheading>
+      
+      <VideoContainer>
+        <iframe 
+          width="100%" 
+          height="450" 
+          src="https://www.youtube.com/embed/JoWLlwdYmEc" 
+          title="TabHive Demo" 
+          frameBorder="0" 
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+          allowFullScreen
+        ></iframe>
+      </VideoContainer>
+      
+      <CTAButton href={googleDriveLink} target="_blank" rel="noopener noreferrer">
+        Get TabHive Now
+      </CTAButton>
+    </CTAContainer>
+  );
+};
+
+export default CallToAction; 

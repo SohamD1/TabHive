@@ -1,257 +1,250 @@
 import React from 'react';
-import styled from 'styled-components';
-import { motion } from 'framer-motion';
-import { FiSearch, FiCpu, FiLayers, FiCheckCircle } from 'react-icons/fi';
+import styled, { keyframes } from 'styled-components';
 
-const HowItWorksSection = styled.section`
-  padding: ${({ theme }) => `${theme.spacing[16]} ${theme.spacing[6]}`};
-  background-color: ${({ theme }) => theme.colors.background.secondary};
-  
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    padding: ${({ theme }) => `${theme.spacing[10]} ${theme.spacing[6]}`};
-  }
+const glowAnimation = keyframes`
+  0% { box-shadow: 0 0 10px 2px rgba(251, 251, 4, 0.1); }
+  50% { box-shadow: 0 0 20px 5px rgba(251, 251, 4, 0.2); }
+  100% { box-shadow: 0 0 10px 2px rgba(251, 251, 4, 0.1); }
 `;
 
-const SectionHeader = styled.div`
-  text-align: center;
-  max-width: 700px;
-  margin: 0 auto ${({ theme }) => theme.spacing[12]};
+const pulse = keyframes`
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
 `;
 
-const SectionTitle = styled.h2`
-  font-size: ${({ theme }) => theme.fontSizes['3xl']};
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 40px 0;
   position: relative;
-  display: inline-block;
+  overflow: hidden;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(251, 251, 4, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+    top: -50%;
+    left: -50%;
+    z-index: -1;
+  }
   
   &:after {
     content: '';
     position: absolute;
-    bottom: -10px;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+    background-image: 
+      linear-gradient(to right, rgba(251, 251, 4, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(251, 251, 4, 0.07) 1px, transparent 1px),
+      radial-gradient(circle at 40px 40px, rgba(251, 251, 4, 0.1) 2px, transparent 2px),
+      radial-gradient(circle at 80px 120px, rgba(251, 251, 4, 0.1) 2px, transparent 2px),
+      radial-gradient(circle at 160px 90px, rgba(251, 251, 4, 0.1) 2px, transparent 2px),
+      radial-gradient(circle at 220px 160px, rgba(251, 251, 4, 0.1) 2px, transparent 2px),
+      radial-gradient(circle at 280px 30px, rgba(251, 251, 4, 0.1) 2px, transparent 2px),
+      linear-gradient(to right, transparent 70px, rgba(251, 251, 4, 0.08) 70px, rgba(251, 251, 4, 0.08) 71px, transparent 71px),
+      linear-gradient(to bottom, transparent 110px, rgba(251, 251, 4, 0.08) 110px, rgba(251, 251, 4, 0.08) 111px, transparent 111px),
+      linear-gradient(45deg, transparent 190px, rgba(251, 251, 4, 0.07) 190px, rgba(251, 251, 4, 0.07) 192px, transparent 192px);
+    background-size: 300px 300px;
+    background-position: center;
+    z-index: -2;
+    opacity: 0.6;
+  }
+`;
+
+const CircuitLines = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -3;
+  overflow: hidden;
+  
+  &:before {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 120%;
+    height: 120%;
+    background-image: 
+      linear-gradient(90deg, transparent 97%, rgba(251, 251, 4, 0.1) 97%),
+      linear-gradient(0deg, transparent 97%, rgba(251, 251, 4, 0.1) 97%),
+      linear-gradient(135deg, transparent 92%, rgba(251, 251, 4, 0.08) 92%);
+    background-size: 50px 50px, 50px 50px, 100px 100px;
+    opacity: 0.5;
+  }
+  
+  &:after {
+    content: '';
+    position: absolute;
+    top: 10%;
+    left: 20%;
+    width: 60%;
+    height: 60%;
+    border: 1px solid rgba(251, 251, 4, 0.05);
+    border-radius: 50%;
+    box-shadow: inset 0 0 50px rgba(251, 251, 4, 0.02);
+  }
+`;
+
+const RandomLine = styled.div`
+  position: absolute;
+  background: rgba(251, 251, 4, 0.07);
+  
+  &:nth-child(1) {
+    top: 20%;
+    left: 10%;
+    width: 30%;
+    height: 1px;
+    transform: rotate(30deg);
+  }
+  
+  &:nth-child(2) {
+    top: 70%;
+    left: 65%;
+    width: 25%;
+    height: 1px;
+    transform: rotate(-15deg);
+  }
+  
+  &:nth-child(3) {
+    top: 40%;
+    left: 80%;
+    width: 15%;
+    height: 1px;
+    transform: rotate(-45deg);
+  }
+  
+  &:nth-child(4) {
+    top: 85%;
+    left: 30%;
+    width: 20%;
+    height: 1px;
+    transform: rotate(10deg);
+  }
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 3rem;
+  margin-bottom: 30px;
+  color: var(--accent-color);
+  text-shadow: 0 0 15px rgba(251, 251, 4, 0.3);
+  position: relative;
+  padding-bottom: 15px;
+  
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 80px;
+    width: 100px;
     height: 3px;
-    background-color: ${({ theme }) => theme.colors.primary[500]};
+    background-color: var(--accent-color);
+    box-shadow: 0 0 10px rgba(251, 251, 4, 0.5);
   }
   
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    font-size: ${({ theme }) => theme.fontSizes['2xl']};
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
   }
 `;
 
-const SectionDescription = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.lg};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  line-height: 1.6;
-`;
-
-const StepsContainer = styled.div`
+const Content = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing[12]};
-  max-width: 900px;
-  margin: 0 auto;
-`;
-
-const Step = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: ${({ theme }) => theme.spacing[8]};
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  width: 100%;
+  max-width: 1200px;
   
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
+  @media (max-width: 768px) {
     flex-direction: column;
     align-items: center;
-    text-align: center;
-  }
-  
-  &:nth-child(even) {
-    flex-direction: row-reverse;
-    
-    @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-      flex-direction: column;
-    }
   }
 `;
 
-const StepContent = styled.div`
-  flex: 1;
-`;
-
-const StepNumber = styled.div`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
-  color: ${({ theme }) => theme.colors.primary[500]};
-  margin-bottom: ${({ theme }) => theme.spacing[2]};
-`;
-
-const StepTitle = styled.h3`
-  font-size: ${({ theme }) => theme.fontSizes['2xl']};
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
-`;
-
-const StepDescription = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  line-height: 1.6;
-  margin-bottom: ${({ theme }) => theme.spacing[4]};
-`;
-
-const StepImageContainer = styled(motion.div)`
-  flex: 1;
-  background-color: ${({ theme }) => theme.colors.background.primary};
-  border-radius: ${({ theme }) => theme.radii.lg};
+const FeatureCard = styled.div`
+  width: 300px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 25px;
+  border: 1px solid rgba(251, 251, 4, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: all 0.3s ease;
+  position: relative;
   overflow: hidden;
-  box-shadow: ${({ theme }) => theme.shadows.lg};
-  padding: ${({ theme }) => theme.spacing[6]};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 250px;
   
-  @media (max-width: ${({ theme }) => theme.breakpoints.md}) {
-    width: 100%;
-    margin-bottom: ${({ theme }) => theme.spacing[6]};
+  &:hover {
+    transform: translateY(-5px);
+    border: 1px solid rgba(251, 251, 4, 0.3);
+    animation: ${pulse} 3s infinite, ${glowAnimation} 3s infinite;
+  }
+  
+  @media (max-width: 768px) {
+    width: 90%;
+    max-width: 300px;
   }
 `;
 
-const StepIcon = styled.div`
-  font-size: 100px;
-  color: ${({ theme }) => theme.colors.primary[400]};
-  opacity: 0.8;
+const FeatureTitle = styled.h3`
+  font-size: 1.5rem;
+  color: var(--accent-color);
+  margin-bottom: 15px;
+  font-weight: 600;
 `;
 
-const StepFeatures = styled.ul`
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-`;
-
-const StepFeature = styled.li`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing[2]};
-  margin-bottom: ${({ theme }) => theme.spacing[2]};
-  font-size: ${({ theme }) => theme.fontSizes.md};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  
-  svg {
-    color: ${({ theme }) => theme.colors.success.main};
-  }
+const FeatureDescription = styled.p`
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
 `;
 
 const HowItWorks: React.FC = () => {
   return (
-    <HowItWorksSection id="how-it-works">
-      <SectionHeader>
-        <SectionTitle>How It Works</SectionTitle>
-        <SectionDescription>
-          TabHive uses advanced technology to intelligently organize your browser tabs in just a few simple steps.
-        </SectionDescription>
-      </SectionHeader>
+    <Container id="how-it-works">
+      <CircuitLines>
+        <RandomLine />
+        <RandomLine />
+        <RandomLine />
+        <RandomLine />
+      </CircuitLines>
+      <SectionTitle>How It Works</SectionTitle>
       
-      <StepsContainer>
-        <Step>
-          <StepContent>
-            <StepNumber>STEP 01</StepNumber>
-            <StepTitle>Tab Analysis</StepTitle>
-            <StepDescription>
-              When you click the TabHive icon, the extension analyzes the content and titles of all your open tabs in the current window.
-            </StepDescription>
-            <StepFeatures>
-              <StepFeature>
-                <FiCheckCircle /> Reads page content and metadata
-              </StepFeature>
-              <StepFeature>
-                <FiCheckCircle /> Detects course codes and keywords
-              </StepFeature>
-              <StepFeature>
-                <FiCheckCircle /> Prepares data for clustering
-              </StepFeature>
-            </StepFeatures>
-          </StepContent>
-          
-          <StepImageContainer
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            <StepIcon>
-              <FiSearch />
-            </StepIcon>
-          </StepImageContainer>
-        </Step>
+      <Content>
+        <FeatureCard>
+          <FeatureTitle>Smart Detection</FeatureTitle>
+          <FeatureDescription>
+            TabHive analyzes your open tabs and automatically detects their content, including course codes, project pages, and related topics.
+          </FeatureDescription>
+        </FeatureCard>
         
-        <Step>
-          <StepContent>
-            <StepNumber>STEP 02</StepNumber>
-            <StepTitle>Smart Clustering</StepTitle>
-            <StepDescription>
-              TabHive applies advanced algorithms to group your tabs based on similarity, prioritizing course codes for academic contexts.
-            </StepDescription>
-            <StepFeatures>
-              <StepFeature>
-                <FiCheckCircle /> Groups tabs by course codes first
-              </StepFeature>
-              <StepFeature>
-                <FiCheckCircle /> Applies k-means clustering for remaining tabs
-              </StepFeature>
-              <StepFeature>
-                <FiCheckCircle /> Determines optimal number of groups
-              </StepFeature>
-            </StepFeatures>
-          </StepContent>
-          
-          <StepImageContainer
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            <StepIcon>
-              <FiCpu />
-            </StepIcon>
-          </StepImageContainer>
-        </Step>
+        <FeatureCard>
+          <FeatureTitle>AI Clustering</FeatureTitle>
+          <FeatureDescription>
+            Using AI-powered clustering algorithms, TabHive groups similar tabs together based on content, helping you stay organized even with dozens of tabs open.
+          </FeatureDescription>
+        </FeatureCard>
         
-        <Step>
-          <StepContent>
-            <StepNumber>STEP 03</StepNumber>
-            <StepTitle>Tab Organization</StepTitle>
-            <StepDescription>
-              The extension creates Chrome tab groups with meaningful names based on the content and arranges your tabs accordingly.
-            </StepDescription>
-            <StepFeatures>
-              <StepFeature>
-                <FiCheckCircle /> Creates Chrome tab groups
-              </StepFeature>
-              <StepFeature>
-                <FiCheckCircle /> Names groups based on content or course codes
-              </StepFeature>
-              <StepFeature>
-                <FiCheckCircle /> Arranges tabs within each group
-              </StepFeature>
-            </StepFeatures>
-          </StepContent>
-          
-          <StepImageContainer
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            viewport={{ once: true, margin: "-100px" }}
-          >
-            <StepIcon>
-              <FiLayers />
-            </StepIcon>
-          </StepImageContainer>
-        </Step>
-      </StepsContainer>
-    </HowItWorksSection>
+        <FeatureCard>
+          <FeatureTitle>Automatic Grouping</FeatureTitle>
+          <FeatureDescription>
+            With a single click, TabHive organizes your tabs into color-coded groups with meaningful names, making it easy to find what you need instantly.
+          </FeatureDescription>
+        </FeatureCard>
+      </Content>
+    </Container>
   );
 };
 
