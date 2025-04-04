@@ -127,7 +127,7 @@ const CallToAction: React.FC = () => {
         </video>
       </VideoContainer>
       
-      <CTAButton href={googleDriveLink} target="_blank" rel="noopener noreferrer">
+      <CTAButton href="https://github.com/sohamd1/tabhive" target="_blank" rel="noopener noreferrer">
         Get TabHive Now
       </CTAButton>
     </CTAContainer>
