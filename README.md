@@ -1,6 +1,8 @@
 # TabHive - Intelligent Tab Organizer
 
-![TabHive Logo](tabhive/assets/icon-128.png)
+<img src="https://github.com/user-attachments/assets/ac3aabad-cd95-4715-8633-59be77b27e28" width="300"/>
+
+
 
 TabHive is a powerful browser extension that helps you organize tabs by clustering similar content together, making your browsing experience more productive and less cluttered.
 
