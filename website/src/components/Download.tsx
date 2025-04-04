@@ -60,14 +60,34 @@ const SectionTitle = styled.h2`
   }
 `;
 
-const VideoContainer = styled.div`
-  width: 100%;
+const InstructionsContainer = styled.div`
   max-width: 800px;
+  margin: 40px auto;
+  background-color: rgba(20, 20, 20, 0.7);
+  padding: 30px;
   border-radius: 12px;
-  overflow: hidden;
-  margin-bottom: 20px;
-  border: 2px solid rgba(251, 251, 4, 0.3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(251, 251, 4, 0.2);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+`;
+
+const InstallSteps = styled.ol`
+  text-align: left;
+  color: white;
+  font-size: 1.2rem;
+  padding-left: 25px;
+  
+  li {
+    margin-bottom: 20px;
+    line-height: 1.6;
+    
+    code {
+      background-color: rgba(50, 50, 50, 0.6);
+      padding: 3px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      color: var(--accent-color);
+    }
+  }
 `;
 
 const ButtonsContainer = styled.div`
@@ -75,6 +95,7 @@ const ButtonsContainer = styled.div`
   gap: 25px;
   flex-wrap: wrap;
   justify-content: center;
+  margin-top: 30px;
 `;
 
 const DownloadButton = styled.a`
@@ -99,38 +120,29 @@ const DownloadButton = styled.a`
   }
 `;
 
-const AlternativeButton = styled(DownloadButton)`
-  background-color: transparent;
-  color: var(--accent-color);
-  box-shadow: 0 0 15px 2px rgba(251, 251, 4, 0.2);
-  
-  &:hover {
-    background-color: rgba(251, 251, 4, 0.1);
-    box-shadow: 0 0 25px 5px rgba(251, 251, 4, 0.3);
-  }
-`;
-
-const BrowserIcon = styled.span`
-  font-size: 1.8rem;
-`;
-
 const Download: React.FC = () => {
   return (
     <DownloadContainer id="download">
       <SectionTitle>How to Install</SectionTitle>
       
-      <VideoContainer>
-        <iframe 
-          width="100%" 
-          height="450" 
-          src="https://www.youtube.com/embed/JoWLlwdYmEc" 
-          title="TabHive Installation Guide" 
-          frameBorder="0" 
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-          allowFullScreen
-        ></iframe>
-      </VideoContainer>
+      <InstructionsContainer>
+        <InstallSteps>
+          <li>Clone the repository: <code>git clone https://github.com/sohamd1/tabhive.git</code></li>
+          <li>Navigate to the project directory: <code>cd tabhive</code></li>
+          <li>Install dependencies: <code>npm install</code></li>
+          <li>Build the extension: <code>npm run build</code></li>
+          <li>Open Chrome and navigate to <code>chrome://extensions</code></li>
+          <li>Enable "Developer mode" in the top right corner</li>
+          <li>Click "Load unpacked" and select the <code>dist</code> folder from the project directory</li>
+          <li>TabHive extension is now installed and ready to use!</li>
+        </InstallSteps>
+      </InstructionsContainer>
       
+      <ButtonsContainer>
+        <DownloadButton href="https://github.com/sohamd1/tabhive" target="_blank" rel="noopener noreferrer">
+          View on GitHub
+        </DownloadButton>
+      </ButtonsContainer>
     </DownloadContainer>
   );
 };
