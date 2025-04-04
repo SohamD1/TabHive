@@ -3,6 +3,12 @@
  * This version doesn't rely on external libraries that cause build issues
  */
 
+import { 
+  calculateTabSemanticSimilarity, 
+  findMostSimilarSubject,
+  initializeEmbeddingSystem
+} from './embeddings';
+
 /**
  * Organize tabs by grouping
  * @param tabs - Array of Chrome tabs
@@ -17,13 +23,95 @@ export async function organizeTabs(
     return new Map<string, chrome.tabs.Tab[]>();
   }
   
-  // If using user-defined groups, distribute tabs among them with multiple attempts
-  if (userDefinedGroups && userDefinedGroups.length > 0) {
-    return assignTabsToUserGroupsWithMultipleAttempts(tabs, userDefinedGroups);
+  // Check for numeric patterns (3-digit codes) first
+  const numericGroups = findNumericPatternGroups(tabs);
+  if (numericGroups.size > 0 && numericGroups.size < tabs.length) {
+    return numericGroups;
   }
   
-  // Simple automatic grouping by domain with multiple attempts
-  return groupTabsByDomainWithMultipleAttempts(tabs);
+  // If using user-defined groups, distribute tabs among them 
+  if (userDefinedGroups && userDefinedGroups.length > 0) {
+    return assignTabsToUserGroups(tabs, userDefinedGroups);
+  }
+  
+  // Simple automatic grouping by domain
+  return groupTabsByDomain(tabs);
+}
+
+/**
+ * Find groups based on common 3-digit patterns in tab titles
+ * @param tabs - Array of tabs to analyze
+ * @returns Map of numeric patterns to tabs that match them
+ */
+function findNumericPatternGroups(tabs: chrome.tabs.Tab[]): Map<string, chrome.tabs.Tab[]> {
+  const patternGroups = new Map<string, chrome.tabs.Tab[]>();
+  const processedTabs = new Set<chrome.tabs.Tab>();
+  
+  // Find all 3-digit patterns in all tabs
+  const tabPatterns = new Map<chrome.tabs.Tab, string[]>();
+  
+  tabs.forEach(tab => {
+    const title = tab.title || '';
+    const patterns = extractThreeDigitPatterns(title);
+    if (patterns.length > 0) {
+      tabPatterns.set(tab, patterns);
+    }
+  });
+  
+  // Group by most common patterns
+  const patternCounts = new Map<string, number>();
+  
+  tabPatterns.forEach((patterns, tab) => {
+    patterns.forEach(pattern => {
+      patternCounts.set(pattern, (patternCounts.get(pattern) || 0) + 1);
+    });
+  });
+  
+  // Sort patterns by frequency
+  const sortedPatterns = [...patternCounts.entries()]
+    .filter(([_, count]) => count > 1) // Only use patterns that appear in multiple tabs
+    .sort((a, b) => b[1] - a[1]);
+  
+  // Create groups for each significant pattern
+  sortedPatterns.forEach(([pattern, count]) => {
+    const groupName = `${pattern}`;
+    patternGroups.set(groupName, []);
+    
+    // Add all tabs with this pattern
+    tabPatterns.forEach((patterns, tab) => {
+      if (patterns.includes(pattern) && !processedTabs.has(tab)) {
+        patternGroups.get(groupName)!.push(tab);
+        processedTabs.add(tab);
+      }
+    });
+  });
+  
+  // If there are ungrouped tabs, don't use pattern grouping at all
+  if (processedTabs.size < tabs.length && processedTabs.size > 0) {
+    patternGroups.set('Other', []);
+    tabs.forEach(tab => {
+      if (!processedTabs.has(tab)) {
+        patternGroups.get('Other')!.push(tab);
+      }
+    });
+  }
+  
+  return patternGroups;
+}
+
+/**
+ * Extract all three-digit patterns from a string
+ * @param text - Text to analyze
+ * @returns Array of 3-digit patterns found
+ */
+function extractThreeDigitPatterns(text: string): string[] {
+  if (!text) return [];
+  
+  // Find all 3-digit patterns
+  const digitPattern = /\b\d{3}\b/g;
+  const matches = text.match(digitPattern);
+  
+  return matches || [];
 }
 
 /**
@@ -79,20 +167,21 @@ function generateGroupingAttempt(
   const groups = new Map<string, chrome.tabs.Tab[]>();
   groupNames.forEach(name => groups.set(name, []));
   
+  // Create collection for tabs without clear matches
+  const uncategorizedTabs: chrome.tabs.Tab[] = [];
+  
   // If there's only one group, assign all tabs to it
   if (groupNames.length === 1) {
     groups.set(groupNames[0], [...tabs]);
     return groups;
   }
   
-  // Create a similarity matrix between tabs and groups
-  const similarityScores: Record<number, Record<string, number>> = {};
-  
   // Calculate similarity scores for each tab and group
   tabs.forEach((tab, tabIndex) => {
-    similarityScores[tabIndex] = {};
     const tabTitle = tab.title?.toLowerCase() || '';
     const tabUrl = tab.url?.toLowerCase() || '';
+    let bestGroup = '';
+    let bestScore = 0;
     
     for (const groupName of groupNames) {
       const groupNameLower = groupName.toLowerCase();
@@ -109,65 +198,326 @@ function generateGroupingAttempt(
       // Domain-based scoring
       score += getDomainTypeScore(tabUrl, groupNameLower);
       
+      // Add subject-based semantic scoring
+      const subjectMatch = findMostSimilarSubject(tab);
+      if (groupNameLower.includes(subjectMatch.categoryName.toLowerCase())) {
+        // Boost score if the group name contains the detected subject
+        score += 2 * subjectMatch.similarity;
+      }
+      
       // Add some controlled randomness based on the attempt index
       // This helps explore different grouping possibilities
       // The randomness decreases with each attempt to converge to a stable solution
       const randomFactor = 1.0 - (attemptIndex / 5); // from 1.0 to 0.2
       score += (Math.random() * 0.5 - 0.25) * randomFactor;
       
-      similarityScores[tabIndex][groupName] = score;
-    }
-  });
-  
-  // Assign tabs to groups based on similarity scores
-  tabs.forEach((tab, tabIndex) => {
-    const scores = similarityScores[tabIndex];
-    
-    // Find group with highest score for this tab
-    let bestGroup = groupNames[0];
-    let bestScore = scores[bestGroup];
-    
-    for (const groupName of groupNames) {
-      if (scores[groupName] > bestScore) {
-        bestScore = scores[groupName];
+      if (score > bestScore) {
+        bestScore = score;
         bestGroup = groupName;
       }
     }
     
-    // If all scores are equal or very low, assign to the group with fewest tabs
-    if (bestScore < 0.1) {
-      bestGroup = [...groups.entries()]
-        .sort((a, b) => a[1].length - b[1].length)[0][0];
+    // Use a threshold for assignment - add to uncategorized if low confidence
+    if (bestScore < 0.5) {
+      uncategorizedTabs.push(tab);
+    } else {
+      groups.get(bestGroup)!.push(tab);
     }
-    
-    // Add tab to selected group
-    const currentTabs = groups.get(bestGroup) || [];
-    groups.set(bestGroup, [...currentTabs, tab]);
   });
   
-  // Balance groups - move tabs from large groups to empty ones
-  const emptyGroups = [...groups.entries()]
-    .filter(([_, tabs]) => tabs.length === 0)
-    .map(([name, _]) => name);
-  
-  if (emptyGroups.length > 0) {
-    const largeGroups = [...groups.entries()]
-      .filter(([_, tabs]) => tabs.length > 1)
-      .sort((a, b) => b[1].length - a[1].length);
-    
-    emptyGroups.forEach(emptyGroup => {
-      if (largeGroups.length > 0 && largeGroups[0][1].length > 1) {
-        const [largeGroupName, largeGroupTabs] = largeGroups[0];
-        const tabToMove = largeGroupTabs.pop()!;
-        
-        groups.get(emptyGroup)!.push(tabToMove);
-        
-        // Re-sort large groups
-        largeGroups.sort((a, b) => b[1].length - a[1].length);
-      }
+  // Process uncategorized tabs if we have any
+  if (uncategorizedTabs.length > 0) {
+    const autoGroups = generateAutoGroups(uncategorizedTabs);
+    autoGroups.forEach((tabs, groupName) => {
+      groups.set(groupName, tabs);
     });
   }
   
+  return groups;
+}
+
+/**
+ * Direct assignment of tabs to user groups without multiple attempts
+ */
+function assignTabsToUserGroups(
+  tabs: chrome.tabs.Tab[],
+  groupNames: string[]
+): Map<string, chrome.tabs.Tab[]> {
+  // Create a map to store tabs for each group
+  const groups = new Map<string, chrome.tabs.Tab[]>();
+  groupNames.forEach(name => groups.set(name, []));
+  
+  // Create collection for tabs without clear matches
+  const uncategorizedTabs: chrome.tabs.Tab[] = [];
+  
+  // If there's only one group, assign all tabs to it
+  if (groupNames.length === 1) {
+    groups.set(groupNames[0], [...tabs]);
+    return groups;
+  }
+  
+  // Assign each tab to the best matching group
+  tabs.forEach(tab => {
+    const tabTitle = tab.title?.toLowerCase() || '';
+    const tabUrl = tab.url?.toLowerCase() || '';
+    let bestGroup = '';
+    let bestScore = 0;
+    
+    for (const groupName of groupNames) {
+      const groupNameLower = groupName.toLowerCase();
+      let score = 0;
+      
+      // Check if tab title contains the group name
+      if (tabTitle.includes(groupNameLower)) {
+        score += 3;
+      }
+      
+      // Check if URL contains the group name
+      if (tabUrl.includes(groupNameLower)) {
+        score += 2;
+      }
+      
+      // Subject match
+      const subjectMatch = findMostSimilarSubject(tab);
+      if (groupNameLower.includes(subjectMatch.categoryName.toLowerCase())) {
+        score += 2 * subjectMatch.similarity;
+      }
+      
+      // Additional scoring based on domain types
+      score += getDomainTypeScore(tabUrl, groupNameLower);
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestGroup = groupName;
+      }
+    }
+    
+    // Use a threshold for assignment
+    if (bestScore < 0.5) {
+      uncategorizedTabs.push(tab);
+    } else {
+      // Add tab to the best matching group
+      groups.get(bestGroup)!.push(tab);
+    }
+  });
+  
+  // Process uncategorized tabs if we have any
+  if (uncategorizedTabs.length > 0) {
+    const autoGroups = generateAutoGroups(uncategorizedTabs);
+    autoGroups.forEach((tabs, groupName) => {
+      groups.set(groupName, tabs);
+    });
+  }
+  
+  return groups;
+}
+
+/**
+ * Automatically generate group names for uncategorized tabs
+ * @param tabs - Array of tabs without a clear category
+ * @returns Map of auto-generated group names to tab arrays
+ */
+function generateAutoGroups(tabs: chrome.tabs.Tab[]): Map<string, chrome.tabs.Tab[]> {
+  const groups = new Map<string, chrome.tabs.Tab[]>();
+  
+  // If there are no tabs, return empty result
+  if (tabs.length === 0) {
+    return groups;
+  }
+  
+  // Check if these are mostly social network tabs
+  let socialCount = 0;
+  tabs.forEach(tab => {
+    const url = tab.url?.toLowerCase() || '';
+    if (
+      url.includes('facebook.com') || 
+      url.includes('twitter.com') || 
+      url.includes('instagram.com') ||
+      url.includes('reddit.com') ||
+      url.includes('tiktok.com') ||
+      url.includes('youtube.com') ||
+      url.includes('pinterest.com') ||
+      url.includes('tumblr.com') ||
+      url.includes('discord.com') ||
+      url.includes('linkedin.com') ||
+      url.includes('snapchat.com') ||
+      url.includes('tinder.com') ||
+      url.includes('bumble.com')
+    ) {
+      socialCount++;
+    }
+  });
+  
+  if (socialCount / tabs.length > 0.4) {
+    groups.set('Social Media', tabs);
+    return groups;
+  }
+  
+  // Check if these are mostly entertainment tabs
+  let entertainmentCount = 0;
+  tabs.forEach(tab => {
+    const url = tab.url?.toLowerCase() || '';
+    const title = tab.title?.toLowerCase() || '';
+    if (
+      url.includes('netflix.com') || 
+      url.includes('hulu.com') || 
+      url.includes('youtube.com') ||
+      url.includes('spotify.com') ||
+      url.includes('twitch.tv') ||
+      url.includes('disneyplus.com') ||
+      url.includes('hbomax.com') ||
+      url.includes('primevideo.com') ||
+      url.includes('music') ||
+      url.includes('podcast') ||
+      url.includes('video') ||
+      url.includes('movie') ||
+      url.includes('film') ||
+      url.includes('tv') ||
+      title.includes('video') ||
+      title.includes('movie') ||
+      title.includes('watch') ||
+      title.includes('stream') ||
+      title.includes('episode')
+    ) {
+      entertainmentCount++;
+    }
+  });
+  
+  if (entertainmentCount / tabs.length > 0.4) {
+    groups.set('Entertainment', tabs);
+    return groups;
+  }
+  
+  // Check if these are mostly shopping tabs
+  let shoppingCount = 0;
+  tabs.forEach(tab => {
+    const url = tab.url?.toLowerCase() || '';
+    const title = tab.title?.toLowerCase() || '';
+    if (
+      url.includes('amazon.com') || 
+      url.includes('ebay.com') || 
+      url.includes('etsy.com') ||
+      url.includes('walmart.com') ||
+      url.includes('shop') ||
+      url.includes('store') ||
+      url.includes('bestbuy.com') ||
+      url.includes('target.com') ||
+      url.includes('ecommerce') ||
+      url.includes('cart') ||
+      url.includes('checkout') ||
+      url.includes('order') ||
+      title.includes('buy') ||
+      title.includes('shop') ||
+      title.includes('order') ||
+      title.includes('cart') ||
+      title.includes('purchase')
+    ) {
+      shoppingCount++;
+    }
+  });
+  
+  if (shoppingCount / tabs.length > 0.4) {
+    groups.set('Shopping', tabs);
+    return groups;
+  }
+  
+  // Check if these are mostly news tabs
+  let newsCount = 0;
+  tabs.forEach(tab => {
+    const url = tab.url?.toLowerCase() || '';
+    const title = tab.title?.toLowerCase() || '';
+    if (
+      url.includes('news') || 
+      url.includes('bbc.com') || 
+      url.includes('cnn.com') ||
+      url.includes('nytimes.com') ||
+      url.includes('reuters.com') ||
+      url.includes('washingtonpost.com') ||
+      url.includes('theguardian.com') ||
+      url.includes('huffpost.com') ||
+      url.includes('bloomberg.com') ||
+      title.includes('news') ||
+      title.includes('latest') ||
+      title.includes('breaking')
+    ) {
+      newsCount++;
+    }
+  });
+  
+  if (newsCount / tabs.length > 0.4) {
+    groups.set('News & Updates', tabs);
+    return groups;
+  }
+  
+  // Try clustering based on most frequent words in titles
+  const wordFrequencies = new Map<string, number>();
+  const excludedWords = new Set([
+    'a', 'an', 'the', 'and', 'but', 'or', 'for', 'nor', 'on', 'at', 'to', 'from', 'by',
+    'with', 'in', 'out', 'over', 'of', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+    'this', 'that', 'these', 'those', 'my', 'your', 'his', 'her', 'its', 'our', 'their',
+    'has', 'have', 'had', 'do', 'does', 'did', 'will', 'would', 'shall', 'should', 'can',
+    'could', 'may', 'might', 'must', 'com', 'org', 'net', 'html', 'htm', 'php'
+  ]);
+  
+  tabs.forEach(tab => {
+    const title = tab.title || '';
+    // Extract words, remove special chars, filter short words and excluded words
+    const words = title.toLowerCase()
+                       .replace(/[^\w\s]/g, ' ')
+                       .split(/\s+/)
+                       .filter(word => word.length > 3 && !excludedWords.has(word));
+                       
+    words.forEach(word => {
+      wordFrequencies.set(word, (wordFrequencies.get(word) || 0) + 1);
+    });
+  });
+  
+  // Find most common words
+  const topWords = [...wordFrequencies.entries()]
+    .filter(([_, count]) => count > 1)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([word, _]) => word.charAt(0).toUpperCase() + word.slice(1));
+  
+  if (topWords.length > 0) {
+    if (topWords.length === 1) {
+      groups.set(`${topWords[0]} Pages`, tabs);
+    } else {
+      groups.set(`${topWords[0]} & ${topWords[1]}`, tabs);
+    }
+    return groups;
+  }
+  
+  // Default to domain-based grouping
+  const domainCounts = new Map<string, number>();
+  tabs.forEach(tab => {
+    if (!tab.url) return;
+    
+    try {
+      const domain = new URL(tab.url).hostname.replace(/^www\./, '');
+      const simpleDomain = domain.split('.')[0];
+      domainCounts.set(simpleDomain, (domainCounts.get(simpleDomain) || 0) + 1);
+    } catch (e) {
+      // Ignore invalid URLs
+    }
+  });
+  
+  const topDomains = [...domainCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 2)
+    .map(([domain, _]) => domain.charAt(0).toUpperCase() + domain.slice(1));
+  
+  if (topDomains.length > 0) {
+    if (topDomains.length === 1) {
+      groups.set(`${topDomains[0]} Pages`, tabs);
+    } else {
+      groups.set(`${topDomains[0]} & ${topDomains[1]}`, tabs);
+    }
+    return groups;
+  }
+  
+  // Last resort
+  groups.set('Quick Access', tabs);
   return groups;
 }
 
@@ -178,14 +528,6 @@ function evaluateGroupingQuality(
   grouping: Map<string, chrome.tabs.Tab[]>, 
   allTabs: chrome.tabs.Tab[]
 ): number {
-  // No empty groups is good
-  const hasEmptyGroups = [...grouping.values()].some(tabs => tabs.length === 0);
-  
-  // Balanced groups are good (less variance in group sizes)
-  const groupSizes = [...grouping.values()].map(tabs => tabs.length);
-  const avgSize = groupSizes.reduce((sum, size) => sum + size, 0) / groupSizes.length;
-  const sizeVariance = groupSizes.reduce((sum, size) => sum + Math.pow(size - avgSize, 2), 0) / groupSizes.length;
-  
   // Coherence within groups is good (similar tabs in same groups)
   let coherenceScore = 0;
   
@@ -198,7 +540,8 @@ function evaluateGroupingQuality(
     
     for (let i = 0; i < tabs.length; i++) {
       for (let j = i + 1; j < tabs.length; j++) {
-        pairwiseSimilarities += calculateTabSimilarity(tabs[i], tabs[j]);
+        // Use semantic similarity
+        pairwiseSimilarities += calculateTabSemanticSimilarity(tabs[i], tabs[j]);
         pairCount++;
       }
     }
@@ -210,71 +553,19 @@ function evaluateGroupingQuality(
   // Normalize coherence score
   coherenceScore = coherenceScore / allTabs.length;
   
-  // Overall score combines multiple factors
-  const emptyGroupPenalty = hasEmptyGroups ? -10 : 0;
-  const balanceScore = 10 / (1 + sizeVariance); // Higher variance = lower score
-  
-  const totalScore = coherenceScore + balanceScore + emptyGroupPenalty;
+  // Overall score is just coherence (we removed balance considerations)
+  const totalScore = coherenceScore;
   
   return totalScore;
 }
 
 /**
  * Calculate similarity between two tabs
+ * This is kept for backward compatibility but uses the new semantic similarity
  */
 function calculateTabSimilarity(tab1: chrome.tabs.Tab, tab2: chrome.tabs.Tab): number {
-  const url1 = tab1.url || '';
-  const url2 = tab2.url || '';
-  const title1 = tab1.title || '';
-  const title2 = tab2.title || '';
-  
-  let similarity = 0;
-  
-  // Same domain is a strong signal
-  try {
-    const domain1 = new URL(url1).hostname;
-    const domain2 = new URL(url2).hostname;
-    
-    if (domain1 === domain2) {
-      similarity += 0.5;
-    }
-    
-    // Subdomain match
-    const baseDomain1 = domain1.split('.').slice(-2).join('.');
-    const baseDomain2 = domain2.split('.').slice(-2).join('.');
-    
-    if (baseDomain1 === baseDomain2) {
-      similarity += 0.3;
-    }
-  } catch (e) {
-    // Invalid URL, do nothing
-  }
-  
-  // Path similarity
-  try {
-    const path1 = new URL(url1).pathname.split('/').filter(Boolean);
-    const path2 = new URL(url2).pathname.split('/').filter(Boolean);
-    
-    if (path1.length > 0 && path2.length > 0) {
-      const commonPathElements = path1.filter(p => path2.includes(p)).length;
-      const pathSimilarity = commonPathElements / Math.max(path1.length, path2.length);
-      similarity += pathSimilarity * 0.2;
-    }
-  } catch (e) {
-    // Invalid URL, do nothing
-  }
-  
-  // Title similarity (basic)
-  const words1 = title1.toLowerCase().split(/\s+/);
-  const words2 = title2.toLowerCase().split(/\s+/);
-  
-  if (words1.length > 0 && words2.length > 0) {
-    const commonWords = words1.filter(w => words2.includes(w)).length;
-    const titleSimilarity = commonWords / Math.max(words1.length, words2.length);
-    similarity += titleSimilarity * 0.3;
-  }
-  
-  return similarity;
+  // Using the new semantic similarity function
+  return calculateTabSemanticSimilarity(tab1, tab2);
 }
 
 /**
@@ -387,11 +678,13 @@ function groupTabsByDomainWithMultipleAttempts(tabs: chrome.tabs.Tab[]): Map<str
  */
 function groupTabsByDomain(tabs: chrome.tabs.Tab[]): Map<string, chrome.tabs.Tab[]> {
   const domainGroups = new Map<string, chrome.tabs.Tab[]>();
+  const uncategorizedTabs: chrome.tabs.Tab[] = [];
   
   // Process each tab
   tabs.forEach(tab => {
     if (!tab.url) {
       // Skip tabs without URLs
+      uncategorizedTabs.push(tab);
       return;
     }
     
@@ -420,58 +713,29 @@ function groupTabsByDomain(tabs: chrome.tabs.Tab[]): Map<string, chrome.tabs.Tab
       
       // Handle empty domains or errors
       if (!groupName || groupName === '') {
-        groupName = 'Other';
+        uncategorizedTabs.push(tab);
+      } else {
+        // Add tab to the domain group
+        if (!domainGroups.has(groupName)) {
+          domainGroups.set(groupName, []);
+        }
+        domainGroups.get(groupName)!.push(tab);
       }
-      
-      // Add tab to the domain group
-      if (!domainGroups.has(groupName)) {
-        domainGroups.set(groupName, []);
-      }
-      domainGroups.get(groupName)!.push(tab);
     } catch (e) {
-      // Handle invalid URLs - add to Other group
-      if (!domainGroups.has('Other')) {
-        domainGroups.set('Other', []);
-      }
-      domainGroups.get('Other')!.push(tab);
+      // Handle invalid URLs - add to uncategorized
+      uncategorizedTabs.push(tab);
     }
   });
   
+  // Process uncategorized tabs if we have any
+  if (uncategorizedTabs.length > 0) {
+    const autoGroups = generateAutoGroups(uncategorizedTabs);
+    autoGroups.forEach((tabs, groupName) => {
+      domainGroups.set(groupName, tabs);
+    });
+  }
+  
   return domainGroups;
-}
-
-/**
- * Assign tabs to user-defined groups
- * Original implementation for backward compatibility
- */
-function assignTabsToUserGroups(
-  tabs: chrome.tabs.Tab[], 
-  groupNames: string[]
-): Map<string, chrome.tabs.Tab[]> {
-  // Handle edge cases
-  if (tabs.length === 0 || groupNames.length === 0) {
-    return new Map<string, chrome.tabs.Tab[]>();
-  }
-  
-  // Create a map to store tabs for each group
-  const groups = new Map<string, chrome.tabs.Tab[]>();
-  groupNames.forEach(name => groups.set(name, []));
-  
-  // If there's only one group, assign all tabs to it
-  if (groupNames.length === 1) {
-    groups.set(groupNames[0], [...tabs]);
-    return groups;
-  }
-  
-  // Distribute tabs evenly among groups
-  tabs.forEach((tab, index) => {
-    const groupIndex = index % groupNames.length;
-    const groupName = groupNames[groupIndex];
-    const currentTabs = groups.get(groupName) || [];
-    groups.set(groupName, [...currentTabs, tab]);
-  });
-  
-  return groups;
 }
 
 export { assignTabsToUserGroups, assignTabsToUserGroupsWithMultipleAttempts }; 

@@ -13,6 +13,12 @@ const textGlowAnimation = keyframes`
   100% { text-shadow: 0 0 10px rgba(255, 215, 0, 0.4); }
 `;
 
+const pulseAnimation = keyframes`
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+`;
+
 const CTAContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -89,13 +95,27 @@ const CTAButton = styled.a`
   animation: ${glowAnimation} 3s infinite;
   display: inline-block;
   text-decoration: none;
-  margin-bottom: 40px;
+  margin-bottom: 20px;
   letter-spacing: 1.5px;
   
   &:hover {
     transform: translateY(-5px) scale(1.05);
     box-shadow: 0 15px 30px rgba(255, 215, 0, 0.5);
   }
+`;
+
+const ComingSoonNote = styled.p`
+  text-align: center;
+  color: black;
+  background-color: var(--accent-color);
+  font-size: 1.3rem;
+  margin-bottom: 40px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 8px;
+  display: inline-block;
+  animation: ${pulseAnimation} 2s infinite;
+  box-shadow: 0 0 15px rgba(251, 251, 4, 0.5);
 `;
 
 const CallToAction: React.FC = () => {
@@ -140,6 +160,7 @@ const CallToAction: React.FC = () => {
       <CTAButton href="https://github.com/sohamd1/tabhive" target="_blank" rel="noopener noreferrer">
         Get TabHive Now
       </CTAButton>
+      <ComingSoonNote>Or... Wait a couple days for it to release on the Google Web Store!</ComingSoonNote>
     </CTAContainer>
   );
 };

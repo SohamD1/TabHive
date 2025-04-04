@@ -3,7 +3,7 @@
   "displayName": "TabHive",
   "version": "0.1.0",
   "private": true,
-  "description": "Automatically organize fragmented workflows (code, research, deadlines) into context-aware workspaces",
+  "description": "Automatically organize fragmented workflows (code, research, deadlines) into context-aware workspaces with semantic subject classification",
   "author": "Your Name",
   "contributors": [
     "louisgv"

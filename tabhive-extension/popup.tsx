@@ -18,7 +18,6 @@ import {
   Input,
   FormControl,
   FormLabel,
-  Switch,
   IconButton,
   Collapse
 } from "@chakra-ui/react"
@@ -167,7 +166,6 @@ function Popup() {
   
   const [isLoading, setIsLoading] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
-  const [useCustomGroups, setUseCustomGroups] = useState(true); // Default to true for better UX
   const [customGroups, setCustomGroups] = useState<string[]>(['Work', 'Personal', 'Research']);
   const toast = useToast();
   const bgColor = useColorModeValue("white", "gray.800");
@@ -188,10 +186,7 @@ function Popup() {
     // Load saved custom groups from storage
     const loadSavedGroups = async () => {
       try {
-        const result = await chrome.storage.local.get(['useCustomGroups', 'customGroups']);
-        if (result.useCustomGroups !== undefined) {
-          setUseCustomGroups(result.useCustomGroups);
-        }
+        const result = await chrome.storage.local.get(['customGroups']);
         if (result.customGroups && Array.isArray(result.customGroups) && result.customGroups.length > 0) {
           setCustomGroups(result.customGroups);
         }
@@ -209,38 +204,35 @@ function Popup() {
     const saveGroups = async () => {
       try {
         await chrome.storage.local.set({
-          useCustomGroups: useCustomGroups,
           customGroups: customGroups
         });
-        console.log("Saved groups:", { useCustomGroups, customGroups });
+        console.log("Saved groups:", { customGroups });
       } catch (error) {
         console.error("Error saving groups:", error);
       }
     };
 
     saveGroups();
-  }, [useCustomGroups, customGroups]);
+  }, [customGroups]);
 
   const organizeTabs = async () => {
-    // Validate if we have at least one group name when using custom groups
-    if (useCustomGroups) {
-      const validGroups = customGroups.filter(group => group.trim() !== '');
-      
-      if (validGroups.length === 0) {
-        toast({
-          title: "Error",
-          description: "Please add at least one group name",
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-          position: "top",
-        });
-        return;
-      }
-      
-      if (validGroups.length < customGroups.length) {
-        setCustomGroups(validGroups);
-      }
+    // Validate if we have at least one group name
+    const validGroups = customGroups.filter(group => group.trim() !== '');
+    
+    if (validGroups.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please add at least one group name",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
+      });
+      return;
+    }
+    
+    if (validGroups.length < customGroups.length) {
+      setCustomGroups(validGroups);
     }
 
     setIsLoading(true);
@@ -251,8 +243,7 @@ function Popup() {
         // Send message to background script to organize tabs
         await chrome.runtime.sendMessage({ 
           action: "organizeTabs",
-          useCustomGroups: useCustomGroups,
-          customGroups: useCustomGroups ? customGroups.filter(group => group.trim() !== '') : []
+          customGroups: customGroups.filter(group => group.trim() !== '')
         });
         
         // Wait a short moment between attempts
@@ -357,61 +348,47 @@ function Popup() {
             >
               <VStack align="start" spacing={4}>
                 <Heading size="sm" color="brand.700">
-                  Custom Group Names
+                  Group Names
                 </Heading>
 
-                <FormControl display="flex" alignItems="center" mb={2}>
-                  <FormLabel htmlFor="custom-groups-toggle" mb="0" fontSize="sm" fontWeight="medium">
-                    Use custom group names
-                  </FormLabel>
-                  <Switch 
-                    id="custom-groups-toggle" 
-                    colorScheme="brand"
-                    isChecked={useCustomGroups}
-                    onChange={(e) => setUseCustomGroups(e.target.checked)}
-                  />
-                </FormControl>
-                
-                <Collapse in={useCustomGroups} animateOpacity style={{ width: '100%' }}>
-                  <VStack spacing={3} align="stretch" mb={2} width="100%">
-                    <Text fontSize="xs" color="gray.500">
-                      Enter up to {MAX_CUSTOM_GROUPS} group names. Your tabs will be organized into these groups.
-                    </Text>
-                    
-                    {customGroups.map((group, index) => (
-                      <HStack key={index}>
-                        <Input
-                          value={group}
-                          onChange={(e) => updateCustomGroup(index, e.target.value)}
-                          placeholder="Group name"
-                          size="sm"
-                          maxLength={20}
-                        />
-                        <IconButton
-                          icon={<RemoveIcon />}
-                          aria-label="Remove group"
-                          size="sm"
-                          onClick={() => removeCustomGroup(index)}
-                          colorScheme="red"
-                          variant="ghost"
-                        />
-                      </HStack>
-                    ))}
-                    
-                    {customGroups.length < MAX_CUSTOM_GROUPS && (
-                      <Button 
-                        leftIcon={<AddIcon />} 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={addCustomGroup}
-                        colorScheme="brand"
-                        width="fit-content"
-                      >
-                        Add Group
-                      </Button>
-                    )}
-                  </VStack>
-                </Collapse>
+                <VStack spacing={3} align="stretch" mb={2} width="100%">
+                  <Text fontSize="xs" color="gray.500">
+                    Enter up to {MAX_CUSTOM_GROUPS} group names. Your tabs will be organized into these groups.
+                  </Text>
+                  
+                  {customGroups.map((group, index) => (
+                    <HStack key={index}>
+                      <Input
+                        value={group}
+                        onChange={(e) => updateCustomGroup(index, e.target.value)}
+                        placeholder="Group name"
+                        size="sm"
+                        maxLength={20}
+                      />
+                      <IconButton
+                        icon={<RemoveIcon />}
+                        aria-label="Remove group"
+                        size="sm"
+                        onClick={() => removeCustomGroup(index)}
+                        colorScheme="red"
+                        variant="ghost"
+                      />
+                    </HStack>
+                  ))}
+                  
+                  {customGroups.length < MAX_CUSTOM_GROUPS && (
+                    <Button 
+                      leftIcon={<AddIcon />} 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={addCustomGroup}
+                      colorScheme="brand"
+                      width="fit-content"
+                    >
+                      Add Group
+                    </Button>
+                  )}
+                </VStack>
               </VStack>
             </Box>
             
@@ -437,19 +414,19 @@ function Popup() {
                     <Center w="24px" h="24px" bg="brand.100" borderRadius="full">
                       <Icon as={TabIcon} boxSize="14px" color="brand.700" />
                     </Center>
-                    <Text fontSize="sm" fontWeight="medium">Detect course codes (CS136, MATH118)</Text>
+                    <Text fontSize="sm" fontWeight="medium">Detect 3-digit codes in tab titles</Text>
                   </HStack>
                   <HStack align="center" spacing={3}>
                     <Center w="24px" h="24px" bg="brand.100" borderRadius="full">
                       <Icon as={TabIcon} boxSize="14px" color="brand.700" />
                     </Center>
-                    <Text fontSize="sm" fontWeight="medium">Group similar tabs by content</Text>
+                    <Text fontSize="sm" fontWeight="medium">Group tabs by your custom groups</Text>
                   </HStack>
                   <HStack align="center" spacing={3}>
                     <Center w="24px" h="24px" bg="brand.100" borderRadius="full">
                       <Icon as={TabIcon} boxSize="14px" color="brand.700" />
                     </Center>
-                    <Text fontSize="sm" fontWeight="medium">Collapse groups for a cleaner interface</Text>
+                    <Text fontSize="sm" fontWeight="medium">Auto-categorize tabs that don't match</Text>
                   </HStack>
                 </VStack>
               </VStack>

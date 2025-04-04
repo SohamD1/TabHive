@@ -110,6 +110,20 @@ const InstallSteps = styled.ol`
   }
 `;
 
+const ComingSoonNote = styled.p`
+  text-align: center;
+  color: black;
+  background-color: var(--accent-color);
+  font-size: 1.3rem;
+  margin-top: 25px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 8px;
+  display: inline-block;
+  animation: ${pulseAnimation} 2s infinite;
+  box-shadow: 0 0 15px rgba(251, 251, 4, 0.5);
+`;
+
 const ButtonsContainer = styled.div`
   display: flex;
   gap: 25px;
@@ -156,6 +170,8 @@ const Download: React.FC = () => {
           <li>Click "Load unpacked" and select the <code>dist</code> folder from the project directory</li>
           <li>TabHive extension is now installed and ready to use!</li>
         </InstallSteps>
+        
+        <ComingSoonNote>Wait a couple days for it to release on the Google Web Store!</ComingSoonNote>
       </InstructionsContainer>
       
       <ButtonsContainer>
