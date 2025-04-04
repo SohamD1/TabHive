@@ -64,6 +64,8 @@ const VideoContainer = styled.div`
   margin-bottom: 60px;
   border: 2px solid rgba(255, 215, 0, 0.3);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  position: relative;
+  padding-top: 45.625%; /* Reduced by 10% from 56.25% */
 `;
 
 const CTAButton = styled.a`
@@ -99,15 +101,30 @@ const CallToAction: React.FC = () => {
       </Subheading>
       
       <VideoContainer>
-        <iframe 
-          width="100%" 
-          height="450" 
-          src="https://www.youtube.com/embed/JoWLlwdYmEc" 
-          title="TabHive Demo" 
-          frameBorder="0" 
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-          allowFullScreen
-        ></iframe>
+        <video
+          muted
+          loop
+          playsInline
+          preload="auto"
+          autoPlay
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+          }}
+          onCanPlayThrough={(e) => {
+            const video = e.target as HTMLVideoElement;
+            video.play().catch(error => {
+              console.error('Error playing video:', error);
+            });
+          }}
+        >
+          <source src="/tabhive_demo_1.mp4" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
       </VideoContainer>
       
       <CTAButton href={googleDriveLink} target="_blank" rel="noopener noreferrer">

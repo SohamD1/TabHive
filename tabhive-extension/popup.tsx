@@ -14,7 +14,13 @@ import {
   useColorModeValue,
   HStack,
   Image,
-  Flex
+  Flex,
+  Input,
+  FormControl,
+  FormLabel,
+  Switch,
+  IconButton,
+  Collapse
 } from "@chakra-ui/react"
 import { keyframes } from "@emotion/react"
 import type { IconProps } from "@chakra-ui/react"
@@ -123,6 +129,26 @@ const TabIcon = (props: IconProps) => (
   </Icon>
 );
 
+// Add icon component
+const AddIcon = (props: IconProps) => (
+  <Icon viewBox="0 0 24 24" {...props}>
+    <path
+      fill="currentColor"
+      d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z"
+    />
+  </Icon>
+);
+
+// Remove icon component
+const RemoveIcon = (props: IconProps) => (
+  <Icon viewBox="0 0 24 24" {...props}>
+    <path
+      fill="currentColor"
+      d="M19,13H5V11H19V13Z"
+    />
+  </Icon>
+);
+
 // Logo component with improved alignment
 const Logo = () => (
   <Flex align="center" justify="center">
@@ -133,9 +159,16 @@ const Logo = () => (
   </Flex>
 );
 
+// Max number of custom groups
+const MAX_CUSTOM_GROUPS = 5;
+
 function Popup() {
+  console.log("Popup component function called");
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isHovering, setIsHovering] = useState(false);
+  const [useCustomGroups, setUseCustomGroups] = useState(true); // Default to true for better UX
+  const [customGroups, setCustomGroups] = useState<string[]>(['Work', 'Personal', 'Research']);
   const toast = useToast();
   const bgColor = useColorModeValue("white", "gray.800");
   const borderColor = useColorModeValue("gray.200", "gray.600");
@@ -145,59 +178,96 @@ function Popup() {
   const pulseStyle = `${pulseAnimation} 2s infinite`;
 
   useEffect(() => {
+    console.log("Popup component mounted");
     // Log the viewport dimensions for debugging
     console.log("Viewport dimensions:", {
       width: window.innerWidth,
       height: window.innerHeight
     });
     
-    // Any initialization logic
-    const initializeState = async () => {
+    // Load saved custom groups from storage
+    const loadSavedGroups = async () => {
       try {
-        console.log("Popup initialized");
+        const result = await chrome.storage.local.get(['useCustomGroups', 'customGroups']);
+        if (result.useCustomGroups !== undefined) {
+          setUseCustomGroups(result.useCustomGroups);
+        }
+        if (result.customGroups && Array.isArray(result.customGroups) && result.customGroups.length > 0) {
+          setCustomGroups(result.customGroups);
+        }
+        console.log("Loaded saved groups:", result);
       } catch (error) {
-        console.error("Error initializing popup:", error);
+        console.error("Error loading saved groups:", error);
       }
     };
 
-    initializeState();
+    loadSavedGroups();
   }, []);
 
+  // Save custom groups to storage when they change
+  useEffect(() => {
+    const saveGroups = async () => {
+      try {
+        await chrome.storage.local.set({
+          useCustomGroups: useCustomGroups,
+          customGroups: customGroups
+        });
+        console.log("Saved groups:", { useCustomGroups, customGroups });
+      } catch (error) {
+        console.error("Error saving groups:", error);
+      }
+    };
+
+    saveGroups();
+  }, [useCustomGroups, customGroups]);
+
   const organizeTabs = async () => {
+    // Validate if we have at least one group name when using custom groups
+    if (useCustomGroups) {
+      const validGroups = customGroups.filter(group => group.trim() !== '');
+      
+      if (validGroups.length === 0) {
+        toast({
+          title: "Error",
+          description: "Please add at least one group name",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+          position: "top",
+        });
+        return;
+      }
+      
+      if (validGroups.length < customGroups.length) {
+        setCustomGroups(validGroups);
+      }
+    }
+
     setIsLoading(true);
+    
     try {
-      // Listen for organization events
-      const messageListener = (message: OrganizationMessage) => {
-        if (message.type === "ORGANIZATION_COMPLETED") {
-          toast({
-            title: "Tabs Organized!",
-            description: `Your tabs have been organized into ${message.numGroups} groups.`,
-            status: "success",
-            duration: 3000,
-            isClosable: true,
-            position: "top",
-          });
-          setIsLoading(false);
-          chrome.runtime.onMessage.removeListener(messageListener as (message: any) => void);
-        } else if (message.type === "ORGANIZATION_ERROR") {
-          toast({
-            title: "Error",
-            description: message.error || "Failed to organize tabs",
-            status: "error",
-            duration: 5000,
-            isClosable: true,
-            position: "top",
-          });
-          setIsLoading(false);
-          chrome.runtime.onMessage.removeListener(messageListener as (message: any) => void);
+      // Run organization 3 times
+      for (let i = 0; i < 3; i++) {
+        // Send message to background script to organize tabs
+        await chrome.runtime.sendMessage({ 
+          action: "organizeTabs",
+          useCustomGroups: useCustomGroups,
+          customGroups: useCustomGroups ? customGroups.filter(group => group.trim() !== '') : []
+        });
+        
+        // Wait a short moment between attempts
+        if (i < 2) {
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
-      };
-      
-      chrome.runtime.onMessage.addListener(messageListener as (message: any) => void);
-      
-      // Send message to background script to organize tabs
-      await chrome.runtime.sendMessage({ 
-        action: "organizeTabs"
+      }
+
+      toast({
+        title: "Tabs Organized!",
+        description: "Your tabs have been organized.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+        position: "top",
       });
     } catch (error: unknown) {
       console.error("Error organizing tabs:", error);
@@ -209,8 +279,30 @@ function Popup() {
         isClosable: true,
         position: "top",
       });
+    } finally {
       setIsLoading(false);
     }
+  };
+
+  // Add a new custom group
+  const addCustomGroup = () => {
+    if (customGroups.length < MAX_CUSTOM_GROUPS) {
+      setCustomGroups([...customGroups, '']);
+    }
+  };
+
+  // Remove a custom group
+  const removeCustomGroup = (index: number) => {
+    const newGroups = [...customGroups];
+    newGroups.splice(index, 1);
+    setCustomGroups(newGroups);
+  };
+
+  // Update a custom group name
+  const updateCustomGroup = (index: number, value: string) => {
+    const newGroups = [...customGroups];
+    newGroups[index] = value;
+    setCustomGroups(newGroups);
   };
 
   return (
@@ -245,10 +337,84 @@ function Popup() {
         <Box 
           py={5} 
           px={4}
-          overflow="hidden"
-          h="calc(100% - 70px)"
+          overflow="auto"
+          maxH="calc(100vh - 120px)"
+          h="calc(100% - 81px)"
         >
           <VStack spacing={6} align="stretch">
+            <Box
+              bg={bgColor} 
+              p={4} 
+              borderRadius="lg" 
+              borderWidth="1px" 
+              borderColor={borderColor}
+              boxShadow="sm"
+              transition="all 0.2s"
+              _hover={{
+                boxShadow: "md",
+                borderColor: "gray.300"
+              }}
+            >
+              <VStack align="start" spacing={4}>
+                <Heading size="sm" color="brand.700">
+                  Custom Group Names
+                </Heading>
+
+                <FormControl display="flex" alignItems="center" mb={2}>
+                  <FormLabel htmlFor="custom-groups-toggle" mb="0" fontSize="sm" fontWeight="medium">
+                    Use custom group names
+                  </FormLabel>
+                  <Switch 
+                    id="custom-groups-toggle" 
+                    colorScheme="brand"
+                    isChecked={useCustomGroups}
+                    onChange={(e) => setUseCustomGroups(e.target.checked)}
+                  />
+                </FormControl>
+                
+                <Collapse in={useCustomGroups} animateOpacity style={{ width: '100%' }}>
+                  <VStack spacing={3} align="stretch" mb={2} width="100%">
+                    <Text fontSize="xs" color="gray.500">
+                      Enter up to {MAX_CUSTOM_GROUPS} group names. Your tabs will be organized into these groups.
+                    </Text>
+                    
+                    {customGroups.map((group, index) => (
+                      <HStack key={index}>
+                        <Input
+                          value={group}
+                          onChange={(e) => updateCustomGroup(index, e.target.value)}
+                          placeholder="Group name"
+                          size="sm"
+                          maxLength={20}
+                        />
+                        <IconButton
+                          icon={<RemoveIcon />}
+                          aria-label="Remove group"
+                          size="sm"
+                          onClick={() => removeCustomGroup(index)}
+                          colorScheme="red"
+                          variant="ghost"
+                        />
+                      </HStack>
+                    ))}
+                    
+                    {customGroups.length < MAX_CUSTOM_GROUPS && (
+                      <Button 
+                        leftIcon={<AddIcon />} 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={addCustomGroup}
+                        colorScheme="brand"
+                        width="fit-content"
+                      >
+                        Add Group
+                      </Button>
+                    )}
+                  </VStack>
+                </Collapse>
+              </VStack>
+            </Box>
+            
             <Box
               bg={bgColor} 
               p={4} 
@@ -338,12 +504,24 @@ function Popup() {
 
 // Mount React to the DOM
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("DOMContentLoaded fired - attempting to mount React app");
   const root = document.getElementById('root');
   if (root) {
-    createRoot(root).render(<Popup />);
+    console.log("Root element found, rendering React app");
+    try {
+      createRoot(root).render(<Popup />);
+      console.log("React app mounted successfully");
+    } catch (error) {
+      console.error("Error rendering React app:", error);
+    }
   } else {
     console.error("Root element not found");
   }
+});
+
+// Add an error boundary at the top level
+window.addEventListener('error', (event) => {
+  console.error('Global error caught:', event.error);
 });
 
 export default Popup;

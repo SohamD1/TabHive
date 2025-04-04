@@ -7,15 +7,15 @@
     "default_popup": "popup.html",
     "default_title": "Organize Tabs",
     "default_icon": {
-      "16": "assets/icon-16.png",
-      "48": "assets/icon-48.png",
-      "128": "assets/icon-128.png"
+      "16": "assets/tabhive.png",
+      "48": "assets/tabhive.png",
+      "128": "assets/tabhive.png"
     }
   },
   "icons": {
-    "16": "assets/icon-16.png",
-    "48": "assets/icon-48.png",
-    "128": "assets/icon-128.png"
+    "16": "assets/tabhive.png",
+    "48": "assets/tabhive.png",
+    "128": "assets/tabhive.png"
   },
   "permissions": [
     "tabs",
@@ -30,6 +30,13 @@
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   }
