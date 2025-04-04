@@ -1,0 +1,40 @@
+// Function to generate a random hex color
+function getRandomColor() {
+  const letters = '0123456789ABCDEF';
+  let color = '#';
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+
+// Function to display a random message from an array
+function displayRandomMessage() {
+  const messages = [
+    "Hello there!",
+    "Keep pushing forward!",
+    "Randomness is the spice of life!",
+    "Stay curious!",
+    "Embrace the unknown!"
+  ];
+  const randomIndex = Math.floor(Math.random() * messages.length);
+  const message = messages[randomIndex];
+
+  // If an element with id 'random-message' exists, display the message
+  const messageElement = document.getElementById('random-message');
+  if (messageElement) {
+    messageElement.textContent = message;
+  } else {
+    // Otherwise, log it to the console
+    console.log("Random Message:", message);
+  }
+}
+
+// Run the functions when the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+  // Set a random background color
+  document.body.style.backgroundColor = getRandomColor();
+  
+  // Display a random message
+  displayRandomMessage();
+});
