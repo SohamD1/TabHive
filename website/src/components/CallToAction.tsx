@@ -33,6 +33,12 @@ const Heading = styled.h1`
     margin-bottom: 30px;
     letter-spacing: 1.5px;
   }
+  
+  @media (max-width: 480px) {
+    font-size: 2.5rem;
+    letter-spacing: 1px;
+    padding: 0 10px;
+  }
 `;
 
 const GlowingText = styled.span`
@@ -41,6 +47,10 @@ const GlowingText = styled.span`
   display: inline;
   font-weight: 700;
   margin-left: 15px;
+  
+  @media (max-width: 480px) {
+    margin-left: 8px;
+  }
 `;
 
 const Subheading = styled.p`

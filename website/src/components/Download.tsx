@@ -68,6 +68,11 @@ const InstructionsContainer = styled.div`
   border-radius: 12px;
   border: 1px solid rgba(251, 251, 4, 0.2);
   box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+  
+  @media (max-width: 768px) {
+    padding: 20px;
+    margin: 30px 15px;
+  }
 `;
 
 const InstallSteps = styled.ol`
@@ -86,6 +91,21 @@ const InstallSteps = styled.ol`
       border-radius: 4px;
       font-family: monospace;
       color: var(--accent-color);
+      word-break: break-all;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 1.1rem;
+    padding-left: 20px;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1rem;
+    padding-right: 10px;
+    
+    li {
+      margin-bottom: 15px;
     }
   }
 `;
