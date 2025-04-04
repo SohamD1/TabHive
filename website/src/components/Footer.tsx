@@ -67,11 +67,10 @@ const Footer: React.FC = () => {
     <FooterContainer>
       <FooterContent>
         <FooterLinks>
-          <FooterLink href="mailto:support@tabhive.com">Contact Us</FooterLink>
-          <FooterLink href="/terms">Terms of Service</FooterLink>
+          <FooterLink href="mailto:davesoham14@gmail.com">Contact Us</FooterLink>
         </FooterLinks>
         <FooterText>
-          Made with <HeartIcon>❤</HeartIcon> by the TabHive Team
+          Made with <HeartIcon>❤</HeartIcon> by Soham Dave
         </FooterText>
         <FooterText>
           &copy; {new Date().getFullYear()} TabHive. All rights reserved.
