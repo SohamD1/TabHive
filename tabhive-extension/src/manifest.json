@@ -20,9 +20,7 @@
   "permissions": [
     "tabs",
     "tabGroups",
-    "storage",
-    "notifications",
-    "alarms"
+    "storage"
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/"
