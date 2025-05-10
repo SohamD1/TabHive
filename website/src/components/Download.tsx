@@ -162,7 +162,7 @@ const Download: React.FC = () => {
       <InstructionsContainer>
         <InstallSteps>
           <li>Clone the repository: <code>git clone https://github.com/sohamd1/tabhive.git</code></li>
-          <li>Navigate to the project directory: <code>cd tabhive</code></li>
+          <li>Navigate to the project directory: <code>cd tabhive-extension</code></li>
           <li>Install dependencies: <code>npm install</code></li>
           <li>Build the extension: <code>npm run build</code></li>
           <li>Open Chrome and navigate to <code>chrome://extensions</code></li>
